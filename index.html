@@ -726,7 +726,7 @@ function evaluate(answers) {
   const scores = calcRealmScores(answers);
   const statuses = scores.map(getStatus);
 
-  // currentLevel: 连续 stabilized 的最高索引（0-based），-1 表示没有
+  // currentLevel: 连续从第1层起 stabilized 的最高索引（0-based），-1 表示没有
   let currentLevel = -1;
   for (let i = 0; i < 10; i++) {
     if (statuses[i] === "stabilized") currentLevel = i;
@@ -750,25 +750,28 @@ function evaluate(answers) {
     }
   }
 
-  // blockLevel
+  // blockLevel: 下一个需要突破的层
   let blockLevel = null;
-  if (currentLevel === 9 && reachedLevel === 9) {
-    blockLevel = null; // 已达最高
-  } else if (faultLevel !== null) {
+  if (faultLevel !== null) {
+    // 有断层：需要突破断层层
     blockLevel = faultLevel;
-  } else if (currentLevel < reachedLevel) {
-    blockLevel = currentLevel; // 巩固当前层
-  } else {
-    blockLevel = (currentLevel + 1 < 10) ? currentLevel + 1 : null;
+  } else if (currentLevel >= 0 && currentLevel < 9) {
+    // 无断层：下一层
+    blockLevel = currentLevel + 1;
+  } else if (currentLevel === 9) {
+    blockLevel = null; // 已达最高
+  } else if (currentLevel < 0) {
+    // 没有任何稳定层，从第1层开始
+    blockLevel = 0;
   }
 
   // userType
   let userType;
-  if (reachedLevel === -1 || (currentLevel === -1 && reachedLevel === -1)) {
+  if (reachedLevel === -1) {
     userType = "迷雾探索";
   } else if (faultLevel !== null) {
     userType = "认知先行";
-  } else if (currentLevel < reachedLevel) {
+  } else if (currentLevel >= 0 && currentLevel < reachedLevel) {
     userType = "觉醒未稳";
   } else {
     userType = "稳步前行";
@@ -918,54 +921,36 @@ function renderResult() {
   const r = state.result;
   const { scores, statuses, currentLevel, reachedLevel, faultLevel, blockLevel, userType } = r;
 
-  // display realm: show the level user is actually at
-  let displayLevel;
-  if (faultLevel !== null) {
-    // 有断层：实际在断层前一层的下一个未稳层
-    displayLevel = faultLevel;
-  } else if (reachedLevel >= 0 && currentLevel >= 0) {
-    // 无断层：显示连续稳定的最高层
-    displayLevel = currentLevel;
-  } else if (reachedLevel >= 0) {
-    // 有觉醒但无稳定层：显示最高觉醒层
-    displayLevel = reachedLevel;
-  } else {
-    displayLevel = 0;
-  }
+  // display realm: 统一基于 currentLevel（连续稳定层），高层觉醒只影响卡片描述
+  const displayLevel = Math.max(currentLevel, 0);
   const realm = REALMS[displayLevel];
 
   // Status scene text
   let statusFirstPara = "";
   let suggestSrc = null;
 
-  if (currentLevel === 9 && reachedLevel === 9 && blockLevel === null) {
-    // 已达最高
+  if (currentLevel === 9 && faultLevel === null) {
+    // 已达最高且无断层
     suggestSrc = REALMS[9];
     statusFirstPara = "";
   } else if (userType === "迷雾探索") {
     suggestSrc = REALMS[0];
     statusFirstPara = `你仍在迷雾中探索，尚未真正进入第1境界。`;
   } else if (faultLevel !== null) {
-    // 有断层：需要回头突破
+    // 有断层：说明高层觉醒但基础有缺口
     const fR = REALMS[faultLevel];
-    const rR = REALMS[reachedLevel];
     suggestSrc = fR;
-    statusFirstPara = `你已经看见第${reachedLevel + 1}境界的可能，但基础还未整合。你需要突破第${faultLevel + 1}境界「${fR.name}」这一层。`;
-  } else if (currentLevel < reachedLevel && currentLevel >= 0) {
-    // 有稳定基础但高层未稳：巩固当前最高稳定层
-    const cR = REALMS[currentLevel];
-    suggestSrc = cR;
-    statusFirstPara = `你已经稳定在第${currentLevel + 1}境界，更高层的体验还需继续巩固。`;
-  } else if (currentLevel < reachedLevel && currentLevel < 0) {
-    // 无稳定层但有觉醒：说明实际所在层
+    statusFirstPara = `你已经看见第${reachedLevel + 1}境界的可能，但第${faultLevel + 1}境界「${fR.name}」的基础还未稳固，需要回头突破。`;
+  } else if (currentLevel < 0 && reachedLevel >= 0) {
+    // 没有稳定层但有觉醒
     const rR = REALMS[reachedLevel];
-    suggestSrc = rR;
-    statusFirstPara = `你在第${reachedLevel + 1}境界「${rR.name}」已有觉知，但还需要更扎实的基础来稳固这一层。`;
-  } else if (blockLevel !== null) {
-    // 正常卡点
+    suggestSrc = REALMS[0];
+    statusFirstPara = `你对第${reachedLevel + 1}境界「${rR.name}」已有觉知，但需要从第1境界开始夯实基础。`;
+  } else if (currentLevel >= 0 && blockLevel !== null) {
+    // 正常递进：当前层已稳定，下一个是blockLevel
     const bR = REALMS[blockLevel];
     suggestSrc = bR;
-    statusFirstPara = `你要抵达的下一个境界是第${blockLevel + 1}境界「${bR.name}」这一层。`;
+    statusFirstPara = `下一个目标是第${blockLevel + 1}境界「${bR.name}」。`;
   } else {
     suggestSrc = REALMS[Math.max(currentLevel, 0)];
     statusFirstPara = `你正在持续深化，继续前行。`;
