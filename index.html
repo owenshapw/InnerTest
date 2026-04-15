@@ -977,12 +977,16 @@ function renderResult() {
   } else if (faultLevel !== null) {
     // 有断层：高层有觉知但中间有缺口
     const fR = REALMS[faultLevel];
-    suggestSrc = fR;
+    suggestSrc = REALMS[Math.max(currentLevel, 0)];
     if (currentLevel < 0) {
       // 无稳定层，说明断层就在最底层附近
       statusFirstPara = `你正在第${faultLevel + 1}境界「${fR.name}」，你在更高层已有觉知，但这一层还需夯实。`;
+    } else if (faultLevel === currentLevel) {
+      // 断层就是当前稳定层的下一层
+      statusFirstPara = `你正在第${currentLevel + 1}境界「${REALMS[currentLevel].name}」，继续夯实这一层。`;
     } else {
-      statusFirstPara = `下一层是第${faultLevel + 1}境界「${fR.name}」。你在更高层已有觉知，但这一层还需夯实。`;
+      // 当前层已稳定，但中间有断层
+      statusFirstPara = `你正在第${currentLevel + 1}境界「${REALMS[currentLevel].name}」，继续夯实这一层。在更高层你已有觉知，但中间有些层级还需补强。`;
     }
   } else if (currentLevel < 0 && reachedLevel >= 0) {
     // 没有稳定层但有觉醒
