@@ -918,14 +918,19 @@ function renderResult() {
   const r = state.result;
   const { scores, statuses, currentLevel, reachedLevel, faultLevel, blockLevel, userType } = r;
 
-  // display realm: for fault cases, show where user actually is; otherwise show reached/current
+  // display realm: show the level user is actually at
   let displayLevel;
   if (faultLevel !== null) {
-    displayLevel = Math.max(faultLevel - 1, 0);
+    // 有断层：实际在断层前一层的下一个未稳层
+    displayLevel = faultLevel;
+  } else if (reachedLevel >= 0 && currentLevel >= 0) {
+    // 无断层：显示连续稳定的最高层
+    displayLevel = currentLevel;
   } else if (reachedLevel >= 0) {
+    // 有觉醒但无稳定层：显示最高觉醒层
     displayLevel = reachedLevel;
   } else {
-    displayLevel = Math.max(currentLevel, 0);
+    displayLevel = 0;
   }
   const realm = REALMS[displayLevel];
 
@@ -941,16 +946,21 @@ function renderResult() {
     suggestSrc = REALMS[0];
     statusFirstPara = `你仍在迷雾中探索，尚未真正进入第1境界。`;
   } else if (faultLevel !== null) {
-    // 有断层
+    // 有断层：需要回头突破
     const fR = REALMS[faultLevel];
     const rR = REALMS[reachedLevel];
     suggestSrc = fR;
     statusFirstPara = `你已经看见第${reachedLevel + 1}境界的可能，但基础还未整合。你需要突破第${faultLevel + 1}境界「${fR.name}」这一层。`;
-  } else if (currentLevel < reachedLevel) {
-    // 巩固当前层
-    const cR = REALMS[currentLevel < 0 ? 0 : currentLevel];
+  } else if (currentLevel < reachedLevel && currentLevel >= 0) {
+    // 有稳定基础但高层未稳：巩固当前最高稳定层
+    const cR = REALMS[currentLevel];
     suggestSrc = cR;
-    statusFirstPara = `你仍需在第${currentLevel + 1}境界「${cR.name}」这一层继续精进。`;
+    statusFirstPara = `你已经稳定在第${currentLevel + 1}境界，更高层的体验还需继续巩固。`;
+  } else if (currentLevel < reachedLevel && currentLevel < 0) {
+    // 无稳定层但有觉醒：说明实际所在层
+    const rR = REALMS[reachedLevel];
+    suggestSrc = rR;
+    statusFirstPara = `你在第${reachedLevel + 1}境界「${rR.name}」已有觉知，但还需要更扎实的基础来稳固这一层。`;
   } else if (blockLevel !== null) {
     // 正常卡点
     const bR = REALMS[blockLevel];
