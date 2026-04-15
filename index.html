@@ -66,6 +66,10 @@
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    @-webkit-keyframes blink10 {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.15; }
+    }
     @keyframes blink10 {
       0%, 100% { opacity: 1; }
       50%      { opacity: 0.15; }
@@ -431,7 +435,9 @@
       text-decoration: underline;
       margin-left: 6px;
       cursor: pointer;
+      -webkit-animation: blink10 2s ease-in-out infinite;
       animation: blink10 2s ease-in-out infinite;
+      will-change: opacity;
     }
     .link-guru:hover { opacity: 0.75; }
     .guru-overlay {
