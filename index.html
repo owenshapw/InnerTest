@@ -421,7 +421,9 @@
       line-height: 1.85;
     }
     .link-guru {
+      font-size: 14px;
       color: var(--color-primary);
+      font-weight: 500;
       text-decoration: underline;
       margin-left: 6px;
       cursor: pointer;
@@ -1044,8 +1046,10 @@ function renderResult() {
     <!-- 状态解读 -->
     <div class="result-status-card slide-up" style="animation-delay:0.1s">
       <p class="status-text">${statusFirstPara}</p>
-      <p class="suggest-text">${suggestion} <span class="link-guru" id="link-guru">跟随大师学习</span></p>
+      <p class="suggest-text">${suggestion}</p>
     </div>
+
+    <p class="link-guru" id="link-guru" style="text-align:center;margin:16px 0 8px">跟随大师学习</p>
 
     <div class="result-actions">
       <button class="btn-primary" id="btn-retake">重新测评</button>
