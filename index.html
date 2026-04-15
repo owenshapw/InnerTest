@@ -764,10 +764,10 @@ function evaluate(answers) {
   const scores = calcRealmScores(answers);
   const statuses = scores.map(getStatus);
 
-  // currentLevel: 连续从第1层起 stabilized 的最高索引（0-based），-1 表示没有
+  // currentLevel: 连续从第1层起 awakened/stabilized 的最高索引（0-based），-1 表示没有
   let currentLevel = -1;
   for (let i = 0; i < 10; i++) {
-    if (statuses[i] === "stabilized") currentLevel = i;
+    if (scores[i] >= 3) currentLevel = i;
     else break;
   }
 
@@ -777,12 +777,12 @@ function evaluate(answers) {
     if (scores[i] >= 3) reachedLevel = i;
   }
 
-  // faultLevel: 某层 inactive 但后续有 awakened/stabilized
+  // faultLevel: 连续 active 链中第一个 score<3 的层，且后续有 score>=3 的层
   let faultLevel = null;
   for (let i = 0; i < 9; i++) {
-    if (statuses[i] === "inactive") {
+    if (scores[i] < 3) {
       for (let j = i + 1; j < 10; j++) {
-        if (scores[j] >= 4) { faultLevel = i; break; }
+        if (scores[j] >= 3) { faultLevel = i; break; }
       }
       if (faultLevel !== null) break;
     }
