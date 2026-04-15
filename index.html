@@ -66,6 +66,10 @@
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    @keyframes blink10 {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.15; }
+    }
 
     /* ─── Logo / Brand ─── */
     .brand {
@@ -427,6 +431,7 @@
       text-decoration: underline;
       margin-left: 6px;
       cursor: pointer;
+      animation: blink10 2s ease-in-out infinite;
     }
     .link-guru:hover { opacity: 0.75; }
     .guru-overlay {
@@ -959,8 +964,8 @@ function renderResult() {
   const r = state.result;
   const { scores, statuses, currentLevel, reachedLevel, faultLevel, blockLevel, userType } = r;
 
-  // display realm: 统一基于 currentLevel（连续稳定层），高层觉醒只影响卡片描述
-  const displayLevel = Math.max(currentLevel, 0);
+  // display realm: 基于 currentLevel；若无连续稳定层但有断层，显示断层层
+  const displayLevel = currentLevel >= 0 ? currentLevel : (faultLevel !== null ? faultLevel : 0);
   const realm = REALMS[displayLevel];
 
   // Status scene text
