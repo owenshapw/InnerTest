@@ -420,6 +420,42 @@
       color: var(--color-text);
       line-height: 1.85;
     }
+    .link-guru {
+      color: var(--color-primary);
+      text-decoration: underline;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+    .link-guru:hover { opacity: 0.75; }
+    .guru-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      cursor: pointer;
+    }
+    .guru-overlay img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .guru-close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     /* Levels radar / summary */
     .levels-grid {
@@ -937,20 +973,29 @@ function renderResult() {
     suggestSrc = REALMS[0];
     statusFirstPara = `你仍在迷雾中探索，尚未真正进入第1境界。`;
   } else if (faultLevel !== null) {
-    // 有断层：说明高层觉醒但基础有缺口
+    // 有断层：高层有觉知但中间有缺口
     const fR = REALMS[faultLevel];
     suggestSrc = fR;
-    statusFirstPara = `你已经看见第${reachedLevel + 1}境界的可能，但第${faultLevel + 1}境界「${fR.name}」的基础还未稳固，需要回头突破。`;
+    if (currentLevel < 0) {
+      // 无稳定层，说明断层就在最底层附近
+      statusFirstPara = `你正在第${faultLevel + 1}境界「${fR.name}」，你在更高层已有觉知，但这一层还需夯实。`;
+    } else {
+      statusFirstPara = `下一层是第${faultLevel + 1}境界「${fR.name}」。你在更高层已有觉知，但这一层还需夯实。`;
+    }
   } else if (currentLevel < 0 && reachedLevel >= 0) {
     // 没有稳定层但有觉醒
     const rR = REALMS[reachedLevel];
     suggestSrc = REALMS[0];
-    statusFirstPara = `你对第${reachedLevel + 1}境界「${rR.name}」已有觉知，但需要从第1境界开始夯实基础。`;
+    statusFirstPara = `下一层是第1境界「${REALMS[0].name}」。你在第${reachedLevel + 1}境界「${rR.name}」已有觉知，但需要从第1层开始夯实基础。`;
   } else if (currentLevel >= 0 && blockLevel !== null) {
     // 正常递进：当前层已稳定，下一个是blockLevel
     const bR = REALMS[blockLevel];
     suggestSrc = bR;
-    statusFirstPara = `下一个目标是第${blockLevel + 1}境界「${bR.name}」。`;
+    if (blockLevel === currentLevel) {
+      statusFirstPara = `你正在第${currentLevel + 1}境界「${REALMS[currentLevel].name}」，继续深入体验这一层。`;
+    } else {
+      statusFirstPara = `下一层是第${blockLevel + 1}境界「${bR.name}」。`;
+    }
   } else {
     suggestSrc = REALMS[Math.max(currentLevel, 0)];
     statusFirstPara = `你正在持续深化，继续前行。`;
@@ -999,7 +1044,7 @@ function renderResult() {
     <!-- 状态解读 -->
     <div class="result-status-card slide-up" style="animation-delay:0.1s">
       <p class="status-text">${statusFirstPara}</p>
-      <p class="suggest-text">${suggestion}</p>
+      <p class="suggest-text">${suggestion} <span class="link-guru" id="link-guru">跟随大师学习</span></p>
     </div>
 
     <div class="result-actions">
@@ -1083,6 +1128,16 @@ function bindEvents() {
     state.result = null;
     clearCache();
     render();
+  });
+
+  // Guru link
+  const linkGuru = document.getElementById("link-guru");
+  if (linkGuru) linkGuru.addEventListener("click", () => {
+    const overlay = document.createElement("div");
+    overlay.className = "guru-overlay";
+    overlay.innerHTML = `<span class="guru-close">&times;</span><img src="sudheer.JPG" alt="大师" />`;
+    overlay.addEventListener("click", () => overlay.remove());
+    document.body.appendChild(overlay);
   });
 }
 
